@@ -72,6 +72,22 @@ echo $d; //0e830.....全部为数字
 var_dump(md5($c) == md5($d));//true
 ?>
 ```
+##### 注意：
+```php
+if ( $_POST['param1'] !==$_POST['param2'] && md5($_POST['param1']) === md5($_POST['param2'])){
+    echo "yes";
+}.  //这种可以直接使用数组绕过
+```
+```php
+    if((string)$_POST['param1'] !==  (string)$_POST['param2'] && md5($_POST['param1']) === md5($_POST['param2'])){
+        echo "yes";
+    } //这种先强制转换类型的就无法使用数组绕过了
+```
+    例如：param1=
+    %D89%A4%FD%14%EC%0EL%1A%FEG%ED%5B%D0%C0%7D%CAh%16%B4%DFl%08Z%FA%1DA%05i%29%C4%FF%80%11%14%E8jk5%0DK%DAa%FC%2B%DC%9F%95ab%D2%09P%A1%5D%12%3B%1ETZ%AA%92%16y%29%CC%7DV%3A%FF%B8e%7FK%D6%CD%1D%DF/a%DE%27%29%EF%08%FC%C0%15%D1%1B%14%C1LYy%B2%F9%88%DF%E2%5B%9E%7D%04c%B1%B0%AFj%1E%7Ch%B0%96%A7%E5U%EBn1q%CA%D0%8B%C7%1BSP
+    &param2=
+    %D89%A4%FD%14%EC%0EL%1A%FEG%ED%5B%D0%C0%7D%CAh%164%DFl%08Z%FA%1DA%05i%29%C4%FF%80%11%14%E8jk5%0DK%DAa%FC%2B%5C%A0%95ab%D2%09P%A1%5D%12%3B%1ET%DA%AA%92%16y%29%CC%7DV%3A%FF%B8e%7FK%D6%CD%1D%DF/a%DE%27%29o%08%FC%C0%15%D1%1B%14%C1LYy%B2%F9%88%DF%E2%5B%9E%7D%04c%B1%B0%AFj%9E%7Bh%B0%96%A7%E5U%EBn1q%CA%D0%0B%C7%1BSP
+    这两个可以通过！
 
 ### 4.strcmp()
 `1.`strcmp(string1, string2)用于比较括号内两个字符串string1和string2，当他们相等时候，返回0；string1的大于string2时，返回>0，小于时返回<0。在5.3及以后的php版本中，当strcmp()括号内是一个数组与字符串比较时，也会返回0。 `实测php7.3输入数组报错`
