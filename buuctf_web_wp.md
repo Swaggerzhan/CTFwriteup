@@ -45,3 +45,6 @@ if (isset($_POST['password'])) {
     知识点：sort可以读取，还有ca\t 也可以读取!
 ### 6.[RCTF 2019]Nextphp
     php7.4新型序列号漏洞
+### 7.[GWCTF 2019]我有一个数据库
+    phpmyadmin4.8.1远程文件包含漏洞（CVE-2018-12613）
+    漏洞payload：http://yourip:port/phpmyadmin/index.php?target=db_sql.php%253f<你的文件路径>

